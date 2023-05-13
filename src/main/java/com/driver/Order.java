@@ -19,4 +19,11 @@ public class Order {
     }
 
     public int getDeliveryTime() {return deliveryTime;}
+    @Override
+    public String toString() {
+        return "Order{" +
+                "id='" + id + '\'' +
+                ", deliveryTime=" + deliveryTime +
+                '}';
+    }
 }
