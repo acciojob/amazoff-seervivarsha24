@@ -12,7 +12,7 @@ public class OrderRepository {
     Map<String, Order> orderMap=new HashMap<>();
     Map<String, DeliveryPartner> deliveryPartnerMap=new HashMap<>();
     Map<String,String> orderPartnerPairMap=new HashMap<>();
-    Map<String, List<Order>> deliveryPartnerToOrder=new HashMap<>();
+    Map<String, List<String>> deliveryPartnerToOrder=new HashMap<>();
     //    public OrderRepository(){
 //        orderMap=new HashMap<>();
 //        deliveryPartnerMap=new HashMap<>();
@@ -30,6 +30,7 @@ public class OrderRepository {
     }
 
     public void addOrderPartnerPair(String orderId, String partnerId) {
+        if(orderMap.containsKey(orderId) && deliveryPartnerMap.containsKey(partnerId))
         orderPartnerPairMap.put(orderId,partnerId);
         // as the order is assigned to the partner then the number of Orders will also increased;
         // so increasing the number of the order in the deliveryPartner
@@ -40,7 +41,7 @@ public class OrderRepository {
         if(!deliveryPartnerToOrder.containsKey(partnerId)){
             deliveryPartnerToOrder.put(partnerId,new ArrayList<>());
         }
-        deliveryPartnerToOrder.get(partnerId).add(orderMap.get(orderId));
+        deliveryPartnerToOrder.get(partnerId).add(orderId);
 
     }
 
@@ -53,7 +54,7 @@ public class OrderRepository {
     }
 
     public Integer getOrderCountByPartnerId(String partnerId) {
-        return deliveryPartnerMap.get(partnerId).getNumberOfOrders();
+        return deliveryPartnerToOrder.get(partnerId).size();
     }
 
     public List<String> getOrdersByPartnerId(String partnerId) {
@@ -63,8 +64,8 @@ public class OrderRepository {
 //        }
         if(!deliveryPartnerToOrder.containsKey(partnerId))
             return orders;
-        for(Order order: deliveryPartnerToOrder.get(partnerId)){
-            orders.add(order.getId());
+        for(String s: deliveryPartnerToOrder.get(partnerId)){
+            orders.add(s);
         }
 
         return orders;
@@ -75,7 +76,7 @@ public class OrderRepository {
         List<String> orders=new ArrayList<>();
         for(String orderId: orderMap.keySet()){
 //            orders.add(orderId);
-            orders.add(orderMap.get(orderId).toString());
+            orders.add(orderId);
         }
         return orders;
     }
@@ -90,19 +91,18 @@ public class OrderRepository {
         String[] timeArray=time.trim().split(":");
         int givenTime=Integer.parseInt(timeArray[0])*60 + Integer.parseInt(timeArray[1]);
         int count=0;
-        for(Order order: deliveryPartnerToOrder.get(partnerId)){
-            if(order.getDeliveryTime()>givenTime)count++;
+        for(String order: deliveryPartnerToOrder.get(partnerId)){
+            Order order1=orderMap.get(order);
+            if(order1.getDeliveryTime()>givenTime)count++;
         }
         return count;
     }
 
     public String getLastDeliveryTimeByPartnerId(String partnerId) {
         int time=0;
-        for(Order order: deliveryPartnerToOrder.get(partnerId)){
-            int deliveryTimeOfOrder=order.getDeliveryTime();
-            if(deliveryTimeOfOrder>time){
-                time=deliveryTimeOfOrder;
-            }
+        for(String order: deliveryPartnerToOrder.get(partnerId)){
+            int deliveryTimeOfOrder=orderMap.get(order).getDeliveryTime();
+            time=Math.max(time,deliveryTimeOfOrder);
         }
         String mm=String.valueOf(time%60);
         String hh=String.valueOf(time/60);
@@ -117,8 +117,8 @@ public class OrderRepository {
         deliveryPartnerMap.remove(partnerId);
 
         // removing all the order form orderPartnerMap
-        for(Order order: deliveryPartnerToOrder.get(partnerId)){
-            orderPartnerPairMap.remove(order.getId());
+        for(String order: deliveryPartnerToOrder.get(partnerId)){
+            orderPartnerPairMap.remove(order);
         }
         // finally removing the partnerId from the deliveryPartnerToOrderMap;
         deliveryPartnerToOrder.remove(partnerId);
@@ -133,7 +133,7 @@ public class OrderRepository {
         orderPartnerPairMap.remove(orderId);
         // now removing from list of order assigned to partnerId
         deliveryPartnerToOrder.get(partnerId).remove(order);
-
+        deliveryPartnerMap.get(partnerId).setNumberOfOrders(deliveryPartnerToOrder.get(partnerId).size());
 
     }
 }
